@@ -37,7 +37,7 @@ $else$
   <link rel="stylesheet" href="$revealjs-url$/dist/theme/black.css" id="theme">
 $endif$
   <!-- Explicitly add zenburn for highlight support -->
-  <link rel="stylesheet" href="$revealjs-url$/plugin/highlight/zenburn.css" id="theme">
+  <link rel="stylesheet" href="$revealjs-url$/dist/plugin/highlight/zenburn.css" id="theme">
 $for(css)$
   <link rel="stylesheet" href="$css$"/>
 $endfor$
@@ -124,9 +124,9 @@ $body$
   </div>
 
   <script src="$revealjs-url$/dist/reveal.js"></script>
-  <script src="$revealjs-url$/plugin/math/math.js"></script>
-  <script src="$revealjs-url$/plugin/notes/notes.js"></script>
-  <script src="$revealjs-url$/plugin/highlight/highlight.js"></script>
+  <script src="$revealjs-url$/dist/plugin/math.js"></script>
+  <script src="$revealjs-url$/dist/plugin/notes.js"></script>
+  <script src="$revealjs-url$/dist/plugin/highlight.js"></script>
 
   <script>
 
@@ -299,17 +299,6 @@ $if(mathjax)$
           //},
         },
 $endif$
-
-        // Optional reveal.js plugins
-        dependencies: [
-          { src: '$revealjs-url$/lib/js/classList.js', condition: function() { return !document.body.classList; } },
-          { src: '$revealjs-url$/plugin/zoom/zoom.js', async: true },
-$if(notes-server)$
-          { src: '$revealjs-url$/socket.io/socker.io.js', async: true },
-          { src: '$revealjs-url$/plugin/notes-server/client.js', async: true },
-$endif$
-          { src: '$revealjs-url$/plugin/notes/notes.js', async: true }
-        ],
         plugins : [ RevealMath, RevealNotes, RevealHighlight],
         pdfMaxPagesPerSlide: 1,
       });
