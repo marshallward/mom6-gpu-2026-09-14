@@ -172,8 +172,8 @@ Performance Picture
 .. image:: img/dycore_and_main.svg
    :width: 84%
 
-The GPU wins once enough horizontal work is exposed, but module speedups vary by
-dependency structure, temporary storage, reductions, and communication.
+.. The GPU wins once enough horizontal work is exposed, but module speedups vary by
+   dependency structure, temporary storage, reductions, and communication.
 
 
 Module Variation
@@ -182,8 +182,8 @@ Module Variation
 .. image:: img/module_scaling.svg
    :width: 92%
 
-The block strategy exposes several solver shapes, but the realized speedup still
-depends on each module's memory access, ordering, and temporary storage.
+.. The block strategy exposes several solver shapes, but the realized speedup still
+   depends on each module's memory access, ordering, and temporary storage.
 
 
 Scaling Picture

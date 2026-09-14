@@ -67,7 +67,7 @@ img/module_scaling.svg: runs/gen_plot.py $(SINGLE_DEVICE_CPU_RUN)/* $(DEVICE_GPU
 img/dycore_and_main.svg: runs/gen_plot.py $(SINGLE_DEVICE_CPU_RUN)/* $(DEVICE_GPU_RUN)/* | img
 	MPLBACKEND=$(MPLBACKEND) $(PYTHON) $< \
 		$(SINGLE_DEVICE_CPU_RUN) $(DEVICE_GPU_RUN) \
-		-o $@ -l "AMD EPYC 9654,GH200" --figsize 6.8,4.5 \
+		-o $@ -l "AMD EPYC 9654,GH200" --figsize 5.5,3.5 \
 		--regions "Main loop" \
 		--with-speedup \
 		--min-config 4 \
