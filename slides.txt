@@ -80,12 +80,14 @@ Representative Block Kernel
 
 .. code:: fortran
 
-   do jsb=js,je,njb ; do isb=is,ie,nib
-     ieb = min(isb + nib - 1, ie)
-     jeb = min(jsb + njb - 1, je)
+   do jsb=js,je,njj ; do isb=is,ie,nii
+     ! Block size is nii/njj, truncated at the end
+     ieb = min(isb + nii - 1, ie)
+     jeb = min(jsb + njj - 1, je)
      iie = ieb - isb + 1
      jje = jeb - jsb + 1
 
+     ! Block loops are local
      do concurrent (k=1:nz, jj=1:jje, ii=1:iie)
        i = isb + ii - 1
        j = jsb + jj - 1
@@ -93,54 +95,80 @@ Representative Block Kernel
      enddo
    enddo ; enddo
 
-Outer loops decompose the domain
 
-Inner loops define the kernel
-
-
-Porting Model
-=============
-
-.. list-table::
-   :widths: 26 12 62
-
-   * - **Kernels**
-     - ->
-     - Fortran ``do concurrent`` expresses independent iterations
-
-   * - **Residency**
-     - ->
-     - OpenMP keeps arrays and control structures on device
-
-   * - **Ordering**
-     - ->
-     - Vertical dependencies and reductions remain explicit
-
-   * - **Geometry**
-     - ->
-     - Runtime blocks expose CPU- and GPU-suitable work units
-
-
-What This Buys
-==============
+Index Convention
+================
 
 .. list-table::
    :widths: 28 72
 
-   * - **Source control**
-     - Solver logic remains recognizable Fortran
+   * - ``i,j,k``
+     - Domain-space index
 
-   * - **Data locality**
-     - Block-local arrays reduce global working set pressure
+   * - ``ii,jj,kk``
+     - Block-local center index
 
-   * - **Concurrency**
-     - Horizontal work is exposed at a GPU-friendly granularity
+   * - ``II,JJ,KK``
+     - Block-local face index
 
-   * - **Tunability**
-     - ``nib`` and ``njb`` can be chosen per build, platform, or solver
+   * - ``(isb:ieb)``
+     - Block start/end bounds
+
+   * - ``(IsbB:IebB)``
+     - Face-aligned block start/end
+
+   * - ``(1:nii)``
+     - Center-indexed block sizes
+
+   * - ``(1:nIIB)``
+     - Face-aligned block sizes
 
 
-Performance Picture
+Layout Parameters
+=================
+
+.. list-table::
+   :widths: 44 56
+
+   * - ``CONTINUITY_NIBLOCK``, ``CONTINUITY_NJBLOCK``
+     - Continuity block size in ``i`` and ``j``
+
+   * - ``CONTINUITY_NKBLOCK``
+     - Reconstruction block layers
+
+   * - ``CORIOLIS_ADV_NKBLOCK``
+     - Coriolis/advection
+
+   * - ``HORVISC_NKBLOCK``
+     - Horizontal viscosity
+
+``0`` selects the full local extent in that direction.
+
+
+Wrapper functions
+=================
+
+.. code:: fortran
+
+   subroutine CorAdCalc(...)
+     nkk = CS%nkblock
+     if (nkk == 0) nkk = GV%ke
+
+     call CorAdCalc_block(..., nkk, ...)
+   end subroutine CorAdCalc
+
+   subroutine CorAdCalc_block(...)
+     do ksb = 1,nk,nkk
+       do kk = 1,nkk
+         ! ...
+       enddo
+     enddo
+   end subroutine CorAdCalc_block
+
+Preserve the module API (no changes to RK2, &c)
+
+
+Current Performance
 ===================
 
 .. image:: img/dycore_and_main.svg
@@ -162,8 +190,8 @@ Module Variation
    storage.
 
 
-Scaling Picture
-===============
+MPI Scaling
+===========
 
 .. image:: img/dycore_speedup.svg
    :width: 76%
@@ -172,14 +200,11 @@ Scaling Picture
    limited by fixed local work and the available GPU communication path.
 
 
-Takeaway
-========
-
-The block implementation is the bridge between portable source and usable GPU
-geometry.
+Programming Model
+=================
 
 .. list-table::
-   :widths: 26 74
+   :widths: 20 80
 
    * - **Fortran**
      - Express independent work with ``do concurrent``
@@ -188,7 +213,7 @@ geometry.
      - Manage data lifetime and movement explicitly
 
    * - **Blocks**
-     - Tune locality and concurrency without forking the solver
+     - Tune locality and concurrency to the target platform
 
    * - **Validation**
-     - Preserve operational answers while adding accelerator performance
+     - Preserve CPU performance and reproducibility while supporting GPUs
