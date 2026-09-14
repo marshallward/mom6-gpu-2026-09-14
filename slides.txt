@@ -46,8 +46,16 @@ Block Traversal
    <object type="image/svg+xml" data="img/block_loop_title.svg" style="width: 68%; height: 48vh; border: 0;" aria-label="Animated block-loop traversal"></object>
 
 
+Block Performance
+=================
+
+.. image:: assets/corad_blocks.svg
+
+Optimize GPU while preserving CPU performance
+
+
 Why Blocking?
-=============
+-------------
 
 .. `do concurrent`` describes dependency structure, but not the "execution geometry"
 
@@ -130,47 +138,6 @@ What This Buys
 
    * - **Tunability**
      - ``nib`` and ``njb`` can be chosen per build, platform, or solver
-
-
-Data Residency
-==============
-
-``do concurrent`` defines computation, but not where data live.
-
-.. code:: fortran
-
-   !$omp target enter data map(to: CS)
-   !$omp target enter data map(to: CS%u)
-   !$omp target enter data map(to: CS%v)
-
-   do concurrent (k=1:nk, j=1:nj, i=1:ni)
-     u(i,j,k) = u(i,j,k) + dt * du(i,j,k)
-   enddo
-
-Persistent fields and control structures stay device-resident across many
-kernels in a timestep.
-
-
-Preserving Answers
-==================
-
-GPU execution must respect MOM6 regression practice.
-
-.. list-table::
-   :widths: 36 64
-
-   * - **Ordered vertical work**
-     - Keep ``k`` loops serial where the algorithm requires it
-
-   * - **Reductions**
-     - Use reproducible accumulation patterns
-
-   * - **Floating point**
-     - Disable transformations such as unwanted FMA contraction when needed
-
-   * - **CPU path**
-     - GPU-enabled source must not regress CPU performance
-
 
 
 Performance Picture
