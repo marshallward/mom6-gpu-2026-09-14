@@ -1,0 +1,48 @@
+name: Deploy presentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out presentation
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            asymptote \
+            dvisvgm \
+            pandoc \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-fonts-recommended \
+            unzip \
+            wget
+
+      - name: Install Python dependencies
+        run: python -m pip install --upgrade numpy matplotlib
+
+      - name: Build deploy directory
+        run: make distclean deploy
+
+      - name: Deploy to marshallward.org
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.PAGES_DEPLOY_KEY }}
+          external_repository: marshallward/marshallward.github.io
+          publish_branch: main
+          publish_dir: ./public
+          destination_dir: .
+          keep_files: true
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com

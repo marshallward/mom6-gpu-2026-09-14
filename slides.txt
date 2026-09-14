@@ -1,0 +1,218 @@
+===================
+Block Loops in MOM6
+===================
+
+:description: Short overview of the MOM6 block implementation for GPU execution.
+:date: 2026-09-14
+:url: https://marshallward.org/mom6-gpu-2026-09-14/
+:kicker: MOM6 dev call
+:title-figure: img/block_loop_title.svg
+:preface:
+   Short presentation on the block implementation strategy used in the MOM6 GPU port.
+
+
+Diverse Solvers
+===============
+
+.. list-table::
+   :widths: 34 66
+
+   * - **Layered**
+     - Horizontal work over vertically stacked layers
+
+   * - **Columnar**
+     - Ordered vertical work over independent columns
+
+   * - **Mixed**
+     - Layered phases, vertical sums, reductions, communication
+
+Different solvers require different strategies
+
+
+Block Shapes
+============
+
+.. image:: img/block_shapes.svg
+   :width: 92%
+
+* CPUs favor data-resident solvers
+* GPUs want large units of work
+
+
+Why Blocking?
+=============
+
+.. `do concurrent`` describes dependency structure, but not the "execution geometry"
+
+.. list-table::
+   :widths: 40 60
+
+   * - **Compiler view**
+     - Smaller, regular kernels are easier to map efficiently
+
+   * - **CPU view**
+     - Preserve locality and familiar ``j-k-i`` traversal where useful
+
+   * - **GPU view**
+     - Expose larger horizontal work units without changing algorithms
+
+   * - **Model view**
+     - Keep solver control flow in ordinary Fortran
+
+
+Representative Block Kernel
+===========================
+
+.. code:: fortran
+
+   do jsb=js,je,njb ; do isb=is,ie,nib
+     ieb = min(isb + nib - 1, ie)
+     jeb = min(jsb + njb - 1, je)
+     iie = ieb - isb + 1
+     jje = jeb - jsb + 1
+
+     do concurrent (k=1:nz, jj=1:jje, ii=1:iie)
+       i = isb + ii - 1
+       j = jsb + jj - 1
+       visc_rem(ii,jj,k) = visc_rem_u(i,j,k)
+     enddo
+   enddo ; enddo
+
+Outer loops decompose the domain
+
+Inner loops define the kernel
+
+
+Porting Model
+=============
+
+.. list-table::
+   :widths: 26 12 62
+
+   * - **Kernels**
+     - ->
+     - Fortran ``do concurrent`` expresses independent iterations
+
+   * - **Residency**
+     - ->
+     - OpenMP keeps arrays and control structures on device
+
+   * - **Ordering**
+     - ->
+     - Vertical dependencies and reductions remain explicit
+
+   * - **Geometry**
+     - ->
+     - Runtime blocks expose CPU- and GPU-suitable work units
+
+
+What This Buys
+==============
+
+.. list-table::
+   :widths: 28 72
+
+   * - **Source control**
+     - Solver logic remains recognizable Fortran
+
+   * - **Data locality**
+     - Block-local arrays reduce global working set pressure
+
+   * - **Concurrency**
+     - Horizontal work is exposed at a GPU-friendly granularity
+
+   * - **Tunability**
+     - ``nib`` and ``njb`` can be chosen per build, platform, or solver
+
+
+Data Residency
+==============
+
+``do concurrent`` defines computation, but not where data live.
+
+.. code:: fortran
+
+   !$omp target enter data map(to: CS)
+   !$omp target enter data map(to: CS%u)
+   !$omp target enter data map(to: CS%v)
+
+   do concurrent (k=1:nk, j=1:nj, i=1:ni)
+     u(i,j,k) = u(i,j,k) + dt * du(i,j,k)
+   enddo
+
+Persistent fields and control structures stay device-resident across many
+kernels in a timestep.
+
+
+Preserving Answers
+==================
+
+GPU execution must respect MOM6 regression practice.
+
+.. list-table::
+   :widths: 36 64
+
+   * - **Ordered vertical work**
+     - Keep ``k`` loops serial where the algorithm requires it
+
+   * - **Reductions**
+     - Use reproducible accumulation patterns
+
+   * - **Floating point**
+     - Disable transformations such as unwanted FMA contraction when needed
+
+   * - **CPU path**
+     - GPU-enabled source must not regress CPU performance
+
+
+
+Performance Picture
+===================
+
+.. image:: img/dycore_and_main.svg
+   :width: 84%
+
+The GPU wins once enough horizontal work is exposed, but module speedups vary by
+dependency structure, temporary storage, reductions, and communication.
+
+
+Module Variation
+================
+
+.. image:: img/module_scaling.svg
+   :width: 92%
+
+The block strategy exposes several solver shapes, but the realized speedup still
+depends on each module's memory access, ordering, and temporary storage.
+
+
+Scaling Picture
+===============
+
+.. image:: img/dycore_speedup.svg
+   :width: 76%
+
+The same data-resident implementation extends across MPI ranks, with scaling
+limited by fixed local work and the available GPU communication path.
+
+
+Takeaway
+========
+
+The block implementation is the bridge between portable source and usable GPU
+geometry.
+
+.. list-table::
+   :widths: 26 74
+
+   * - **Fortran**
+     - Express independent work with ``do concurrent``
+
+   * - **OpenMP**
+     - Manage data lifetime and movement explicitly
+
+   * - **Blocks**
+     - Tune locality and concurrency without forking the solver
+
+   * - **Validation**
+     - Preserve operational answers while adding accelerator performance
