@@ -6,7 +6,6 @@ Block Loops in MOM6
 :date: 2026-09-14
 :url: https://marshallward.org/mom6-gpu-2026-09-14/
 :kicker: MOM6 dev call
-:title-figure: img/block_loop_title.svg
 :preface:
    Short presentation on the block implementation strategy used in the MOM6 GPU port.
 
@@ -37,6 +36,14 @@ Block Shapes
 
 * CPUs favor data-resident solvers
 * GPUs want large units of work
+
+
+Block Traversal
+===============
+
+.. raw:: html
+
+   <object type="image/svg+xml" data="img/block_loop_title.svg" style="width: 68%; height: 48vh; border: 0;" aria-label="Animated block-loop traversal"></object>
 
 
 Why Blocking?
@@ -172,8 +179,9 @@ Performance Picture
 .. image:: img/dycore_and_main.svg
    :width: 84%
 
-.. The GPU wins once enough horizontal work is exposed, but module speedups vary by
-   dependency structure, temporary storage, reductions, and communication.
+.. The GPU wins once enough horizontal work is exposed, but module speedups
+   vary by dependency structure, temporary storage, reductions, and
+   communication.
 
 
 Module Variation
@@ -182,8 +190,9 @@ Module Variation
 .. image:: img/module_scaling.svg
    :width: 92%
 
-.. The block strategy exposes several solver shapes, but the realized speedup still
-   depends on each module's memory access, ordering, and temporary storage.
+.. The block strategy exposes several solver shapes, but the realized speedup
+   still depends on each module's memory access, ordering, and temporary
+   storage.
 
 
 Scaling Picture
@@ -192,8 +201,8 @@ Scaling Picture
 .. image:: img/dycore_speedup.svg
    :width: 76%
 
-The same data-resident implementation extends across MPI ranks, with scaling
-limited by fixed local work and the available GPU communication path.
+.. The same data-resident implementation extends across MPI ranks, with scaling
+   limited by fixed local work and the available GPU communication path.
 
 
 Takeaway

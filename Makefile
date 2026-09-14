@@ -86,7 +86,7 @@ img/dycore_speedup.svg: runs/plot_dycore_scaling.py $(H100_RUNS:=/*) | img
 	MPLBACKEND=$(MPLBACKEND) $(PYTHON) $< $(H100_RUNS) \
 		-o $@ -q speedup --configs 64,256,1024 \
 		--platform-label "1,2,4,8,10" \
-		--figsize 6.8,4.4 \
+		--figsize 5,3 \
 		--dark
 
 img:

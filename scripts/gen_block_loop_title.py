@@ -53,10 +53,11 @@ def write_svg(args):
     </linearGradient>
   </defs>
   <style>
-    .frame {{ fill: none; stroke: rgba(255,255,255,0.35); stroke-width: 1.4; }}
-    .grid-line {{ stroke: rgba(255,255,255,0.13); stroke-width: 0.55; shape-rendering: crispEdges; }}
-    .cell {{ fill: rgba(255,255,255,0.06); }}
-    .visited {{ fill: rgba(66,175,250,0.26); }}
+    .grid-bg {{ fill: #fff; }}
+    .frame {{ fill: none; stroke: rgba(37,50,95,0.35); stroke-width: 1.4; }}
+    .grid-line {{ stroke: rgba(37,50,95,0.34); stroke-width: 0.55; shape-rendering: crispEdges; }}
+    .cell {{ fill: rgba(37,50,95,0.18); }}
+    .visited {{ fill: rgba(0,86,179,0.72); }}
     .active {{ fill: #f3a626; filter: url(#glow); }}
     .block-fill {{ fill: url(#blockFill); }}
     .block-stroke {{ fill: none; stroke: #42affa; stroke-width: 2.4; stroke-linejoin: round; }}
@@ -67,6 +68,7 @@ def write_svg(args):
   </style>
   <g transform="translate({args.margin_left:g} {args.margin_top:g})">
     <text class="label" x="0" y="-12">{label}</text>
+    <rect class="grid-bg" x="0" y="0" width="{grid_size:g}" height="{grid_size:g}" rx="4"/>
     <rect class="frame" x="0" y="0" width="{grid_size:g}" height="{grid_size:g}" rx="4"/>
     <g id="cells"></g>
     <g id="grid"></g>
